@@ -162,10 +162,8 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
       # get images
       images <- .apply(tg$tiles, MARGIN = 1, function(x){
         file <- paste0(map_dir, "/", map_service, "_", map_type, "_", x[1], "_", x[2], ".png")
-        message(file)
         retry <- list(do = TRUE, count = 0)
         while(retry$do){
-          message('retry is ', retry$do)
           
           # download tiles
           url <- paste0(
@@ -192,13 +190,11 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
             unlink(file)
             retry$count <- retry$count+1
             if(retry$count < 10) {
-              message('setting retry to FALSE')
               retry$do <- TRUE 
             }else{
                 out(paste0("Base map download failed: ", catch), type = 3)
               }
           } else{
-            message('setting retry to FALSE')
             retry$do <- FALSE
           }
         }
@@ -230,7 +226,7 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
         return(img_rst)
       }, SIMPLIFY = F, USE.NAMES = F)
       
-      r <- do.call(terra::merge, r)
+      r <- suppressMessages(do.call(terra::merge, r))
       
       if(isFALSE(no_transform)){ ## needed?
         if(as.numeric(tg$crs$epsg) != 3857){
