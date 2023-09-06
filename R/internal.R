@@ -162,9 +162,10 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
       # get images
       images <- .apply(tg$tiles, MARGIN = 1, function(x){
         file <- paste0(map_dir, "/", map_service, "_", map_type, "_", x[1], "_", x[2], ".png")
-        
+        message(file)
         retry <- list(do = TRUE, count = 0)
         while(retry$do){
+          message('retry is ', retry$do)
           
           # download tiles
           url <- paste0(
@@ -176,12 +177,14 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
           )
           
           if(isTRUE(http_error(url))){
+            browser()
             resp <- GET(url)
             status <- resp$status_code
             if(status == 401 & map_service == "mapbox") out("Authentification failed. Is your map_token correct?", type = 3)
             if(status == 403 & map_service == "osm_thunderforest") out("Authentification failed. Is your map_token correct?", type = 3)
           }
           if(!file.exists(file)){
+            browser()
             tryCatch(curl_download(url = url, destfile = file), error = function(e) out(paste0("Tile download failed: ", e$message), type = 3))
           }#utils::download.file(url = url, destfile = file, quiet = T) 
           
@@ -190,11 +193,18 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
           if(inherits(catch, "try-error")){
             unlink(file)
             retry$count <- retry$count+1
-            if(retry$count < 10) retry$do <- TRUE else out(paste0("Base map download failed: ", catch), type = 3)
+            if(retry$count < 10) {
+              message('setting retry to FALSE')
+              retry$do <- TRUE 
+            }else{
+                out(paste0("Base map download failed: ", catch), type = 3)
+              }
           } else{
+            message('setting retry to FALSE')
             retry$do <- FALSE
           }
         }
+        
         
         # convert imagery
         img_down <- image_convert(image_read(file), format = "PNG24")
@@ -222,7 +232,7 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
         return(img_rst)
       }, SIMPLIFY = F, USE.NAMES = F)
       
-      r <- do.call(terra::mosaic, r)
+      r <- do.call(terra::merge, r)
       
       if(isFALSE(no_transform)){ ## needed?
         if(as.numeric(tg$crs$epsg) != 3857){
