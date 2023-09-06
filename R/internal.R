@@ -177,14 +177,12 @@ out <- function(input, type = 1, ll = NULL, msg = FALSE, sign = "", verbose = ge
           )
           
           if(isTRUE(http_error(url))){
-            browser()
             resp <- GET(url)
             status <- resp$status_code
             if(status == 401 & map_service == "mapbox") out("Authentification failed. Is your map_token correct?", type = 3)
             if(status == 403 & map_service == "osm_thunderforest") out("Authentification failed. Is your map_token correct?", type = 3)
           }
           if(!file.exists(file)){
-            browser()
             tryCatch(curl_download(url = url, destfile = file), error = function(e) out(paste0("Tile download failed: ", e$message), type = 3))
           }#utils::download.file(url = url, destfile = file, quiet = T) 
           
